@@ -1,7 +1,7 @@
 {
     "name": "@orbito/render-api",
     "private": true,
-    "version": "0.1.9",
+    "version": "0.1.10",
     "description": "Microservice to render HTML",
     "author": {
         "name": "bemit",
