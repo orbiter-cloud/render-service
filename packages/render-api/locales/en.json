@@ -1,0 +1,10 @@
+{
+    "formats": {
+        "datetime": "yyyy-MM-dd HH:mm:ss",
+        "date": "yyyy-MM-dd",
+        "time": "HH:mm:ss"
+    },
+    "translations": {
+        "o_clock": "o'clock"
+    }
+}

@@ -1,0 +1,24 @@
+@import '~normalize.css/normalize.css';
+$spacing: 4px !default;
+
+@import '~@formanta/sass/meta-base';
+
+$font-family: -apple-system, BlinkMacSystemFont, “Segoe UI”, “Roboto”, “Oxygen”, “Ubuntu”, “Cantarell”, “Fira Sans”, “Droid Sans”, “Helvetica Neue”, sans-serif !default;
+$title-font-family: "Titillium Web", “Fira”, “Droid”, “Helvetica”, serif !default;
+$font-family-mono: "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Courier, monospace !default;
+$title-font-color: #263648 !default;
+$font-color: #2f373a !default;
+$line-height: 1.45 !default;
+
+@import '~@formanta/sass/meta-attributes';
+@import '~@formanta/sass/meta-components';
+
+// custom default styles
+
+@import "~@formanta/sass/style-global";
+@import '~@formanta/sass/style-components';
+@import '~@formanta/sass/style-elements';
+@import '~@formanta/sass/style-attributes';
+@import '~@formanta/sass/style-base';
+
+// custom overwrite styles

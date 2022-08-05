@@ -1,0 +1,4 @@
+tmp
+_auth_*
+**/node_modules
+/.env

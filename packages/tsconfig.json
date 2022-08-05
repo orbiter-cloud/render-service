@@ -1,0 +1,47 @@
+{
+    "compilerOptions": {
+        "module": "esnext",
+        "target": "es2019",
+        "jsx": "preserve",
+        "removeComments": false,
+        "moduleResolution": "node",
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noEmit": false,
+        "experimentalDecorators": true,
+        "baseUrl": "./",
+        "allowSyntheticDefaultImports": true,
+        "noErrorTruncation": true,
+        "allowJs": true,
+        "declaration": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "noUnusedLocals": true,
+        "noImplicitAny": false,
+        "noUnusedParameters": false,
+        "paths": {
+            "@orbito/render": [
+                "render-lib/src"
+            ],
+            "@orbito/render/*": [
+                "render-lib/src/*"
+            ],
+            "@orbito/render-client": [
+                "render-client/src"
+            ],
+            "@orbito/render-client/*": [
+                "render-client/src/*"
+            ],
+            "@orbito/style": [
+                "style-lib/src"
+            ],
+            "@orbito/style/*": [
+                "style-lib/src/*"
+            ]
+        }
+    },
+    "exclude": [
+        "**/build/",
+        "**/node_modules/"
+    ]
+}

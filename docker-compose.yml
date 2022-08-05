@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+    redis:
+        image: redis:6.2.6-alpine
+        environment:
+            - REDIS_PASSWORD=redis
+            #- REDIS_PASSWORD=${REDIS_PASSWORD}
+        ports:
+            - "4218:6379"
+        expose:
+            - 4218
