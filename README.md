@@ -1,6 +1,6 @@
 # Orbito Render
 
-Libs and microservice to render data + template as HTML.
+Microservice & framework to render data + template as optimized HTML.
 
 [![Github actions Build](https://github.com/orbiter-cloud/render-service/actions/workflows/blank.yml/badge.svg)](https://github.com/orbiter-cloud/render-service/actions)
 [![MIT license](https://img.shields.io/npm/l/@orbito/render?style=flat-square)](https://github.com/orbiter-cloud/render-service/blob/main/LICENSE)
