@@ -1,0 +1,51 @@
+{% extends '_main.twig' %}
+
+{% block head_meta %}
+    {% if doc.info.title %}
+        <title>{{ doc.info.title }}</title>
+    {% endif %}
+    {% if doc.info.author %}
+        <meta name="author" content="{{ doc.info.author }}"/>
+    {% endif %}
+    {% if doc.info.description %}
+        <meta name="description" content="{{ doc.info.description }}">
+    {% endif %}
+    {% if doc.info.keywords %}
+        <meta name="keywords" content="{{ doc.info.keywords }}">
+    {% endif %}
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+
+    {% if ctx.links.canonical %}
+        <link rel="canonical" href="{{ ctx.links.canonical }}">
+    {% endif %}
+{% endblock %}
+
+{% block head_style %}
+    <style></style>
+{% endblock %}
+
+{% block header %}
+{% endblock %}
+
+{% block container_inner %}
+    <div data-e2e="content" class="grow-2x">
+        {{ parent() }}
+    </div>
+{% endblock %}
+
+{% block footer_inner__ %}
+    <footer class="bg-paper relative z1 overflow-auto">
+        <div class="container container-md center mb1">
+            <p class="mt1 mb0">&copy; 2022</p>
+        </div>
+    </footer>
+{% endblock %}
+
+{% block body_end %}
+    {{ parent() }}
+{% endblock %}
+
+{% block body_end_script %}
+    {{ parent() }}
+{% endblock %}

@@ -1,0 +1,42 @@
+{
+    "name": "@orbito/render-client",
+    "version": "0.0.1",
+    "description": "HTTP Client to use with Orbito Render service",
+    "author": {
+        "name": "bemit",
+        "url": "https://bemit.codes"
+    },
+    "contributors": [
+        {
+            "name": "Michael Becker",
+            "url": "https://i-am-digital.eu"
+        }
+    ],
+    "engines": {
+        "node": ">=14"
+    },
+    "license": "MIT",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/orbiter-cloud/render-service.git",
+        "directory": "packages/render-client"
+    },
+    "exports": {
+        "./RenderClient": "./build/RenderClient.js"
+    },
+    "devDependencies": {
+        "superagent": "^8.0.0",
+        "@types/superagent": "^4.1.15"
+    },
+    "peerDependencies": {
+        "superagent": "^8.0.0"
+    },
+    "scripts": {
+        "dtsgen": "tsc -d --emitDeclarationOnly --pretty && merge-dirs build/dts build && rm -rf build/dts && rm -rf build/**/*.test.*"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "gitHead": "3a53c93ada348d676b43c6e6ec357953a506253b"
+}

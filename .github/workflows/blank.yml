@@ -1,0 +1,125 @@
+name: Render CI
+
+env:
+    DOCKER_BUILDKIT: 1
+
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main, develop]
+    create:
+        tags:
+            - '[0-9]+.[0-9]+.[0-9]+*'
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+jobs:
+    build_node:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node-version: [14.x]
+        steps:
+            -   uses: actions/checkout@v2
+            -   name: Set Branch
+                id: short_ref
+                run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+            -   name: Set git_url_commit
+                id: git_url_commit
+                run: echo ::set-output name=git_url_commit::${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}
+            -   name: Set git_url_ci_run
+                id: git_url_ci_run
+                run: echo ::set-output name=git_url_ci_run::${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+            -   name: Set git_commit
+                id: git_commit
+                run: echo ::set-output name=git_commit::${GITHUB_REPOSITORY}/${GITHUB_SHA}
+            -   name: Set git_ci_run
+                id: git_ci_run
+                run: echo ::set-output name=git_ci_run::${GITHUB_REPOSITORY}/${GITHUB_RUN_ID}
+            -   name: Use Node.js ${{ matrix.node-version }}
+                uses: actions/setup-node@v1
+                with:
+                    node-version: ${{ matrix.node-version }}
+
+            -   name: Cache CI node_modules
+                uses: actions/cache@v2
+                env:
+                    cache-name: cache-node-modules
+                with:
+                    # npm cache files are stored in `~/.npm` on Linux/macOS
+                    path: ~/.npm
+                    key: ${{ runner.os }}-build-${{ env.cache-name }}
+
+            -   name: Install Node Deps
+                run: |
+                    npm ci
+                    npm run bootstrap
+                    npm run link
+
+            -   name: Test & Build
+                run: |
+                    npm run test
+                    npm run build
+
+            -   name: Send code coverage report to Codecov.io
+                uses: codecov/codecov-action@v3
+                with:
+                    token: ${{ secrets.CODECOV_TOKEN }}
+                    directory: coverage
+                    fail_ci_if_error: true
+
+            -   name: Publish to NPM
+                #if: github.ref == 'refs/heads/main'
+                #if: startsWith(github.ref, 'refs/tags/')
+                run: |
+                    #npm publish build
+                    ./publish.sh
+                env:
+                    NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            -   name: Create Config Stubs
+                run: |
+                    touch .env
+                    touch packages/render-api/build/.env
+                    touch packages/demo-static/build/.env
+
+            # ! important, first create-openapi here, THEN the build_info (with compose), so `home` shows the GIT_COMMIT, but `docs` show packageVersion
+            -   name: Create Open API
+                run: |
+                    npm run openapi
+
+            -   name: Make Build Info
+                env:
+                    GIT_URL_COMMIT: ${{ steps.git_url_commit.outputs.git_url_commit }}
+                    GIT_URL_CI_RUN: ${{ steps.git_url_ci_run.outputs.git_url_ci_run }}
+                    GIT_COMMIT: ${{ steps.git_commit.outputs.git_commit }}
+                    GIT_CI_RUN: ${{ steps.git_ci_run.outputs.git_ci_run }}
+                    GIT_BRANCH: ${{ steps.short_ref.outputs.short_ref }}
+                run: node --unhandled-rejections=strict deploy.js buildInfo
+
+            -   name: Docker Registry login
+                run: docker login -u ${{ secrets.DOCKER_REG_USER_PUB }} -p ${{ secrets.DOCKER_REG_PASS_PUB }}
+            -   name: Build image `render`
+                run: |
+                    docker image build -t bemiteu/render -f packages/render-api/Dockerfile packages/render-api
+            -   name: Publish image `render` as `develop`
+                if: github.ref == 'refs/heads/develop'
+                run: |
+                    docker tag bemiteu/render bemiteu/render:develop
+                    docker push bemiteu/render:develop
+            -   name: Publish image `render` as `main`
+                if: github.ref == 'refs/heads/main'
+                run: |
+                    docker tag bemiteu/render bemiteu/render:main
+                    docker push bemiteu/render:main
+            -   name: Publish image `render` tagged & latest
+                if: startsWith(github.ref, 'refs/tags/')
+                env:
+                    RELEASE_VERSION: ${{ steps.short_ref.outputs.short_ref }}
+                run: |
+                    docker tag bemiteu/render bemiteu/render:$RELEASE_VERSION
+                    docker push bemiteu/render:$RELEASE_VERSION
+                    docker tag bemiteu/render bemiteu/render:latest
+                    docker push bemiteu/render:latest

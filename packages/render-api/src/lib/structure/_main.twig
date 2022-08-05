@@ -1,0 +1,48 @@
+<!doctype html>
+<html{% if ctx.locale %} lang="{{ ctx.locale }}"{% endif %}>
+<head>
+    <meta charset="utf-8">
+    {% block head_meta %}
+    {% endblock %}
+
+    {% block head_script %}
+    {% endblock %}
+
+    {% block head_style %}
+    {% endblock %}
+</head>
+<body class="bg-body {{ theme_class }} flex flex-column">
+{% block body %}
+    {% block header %}
+        <div class="header">
+            {% block header_inner %}
+                <header class="header--inner">
+                    {% block header_inner__ %}{% endblock %}
+                </header>
+            {% endblock %}
+        </div>
+    {% endblock %}
+
+    {% block container_inner %}
+        {% block content %}
+        {% endblock %}
+    {% endblock %}
+
+    {% block footer %}
+        <div class="footer">
+            {% block footer_inner %}
+                <footer class="footer--inner">
+                    {% block footer_inner__ %}{% endblock %}
+                </footer>
+            {% endblock %}
+        </div>
+    {% endblock %}
+
+    {% block body_end %}{% endblock %}
+
+    {% block body_end_script %}
+    {% endblock %}
+
+{% endblock %}
+</body>
+</html>

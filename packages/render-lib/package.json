@@ -1,0 +1,46 @@
+{
+    "name": "@orbito/render",
+    "version": "0.0.8",
+    "description": "i18n and template rendering",
+    "author": {
+        "name": "bemit",
+        "url": "https://bemit.codes"
+    },
+    "contributors": [
+        {
+            "name": "Michael Becker",
+            "url": "https://i-am-digital.eu"
+        }
+    ],
+    "engines": {
+        "node": ">=14"
+    },
+    "license": "MIT",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/orbiter-cloud/render-service.git",
+        "directory": "packages/render-lib"
+    },
+    "exports": {
+        ".": "./build/index.js",
+        "./LocaleService": "./build/LocaleService/index.js",
+        "./TemplateRegistry": "./build/TemplateRegistry/index.js",
+        "./TemplateService": "./build/TemplateService/index.js"
+    },
+    "devDependencies": {
+        "liquidjs": "^9.36.0",
+        "twig": "^1.15.4"
+    },
+    "peerDependencies": {
+        "liquidjs": "^9.36.0",
+        "twig": "^1.15.4"
+    },
+    "scripts": {
+        "dtsgen": "tsc -d --emitDeclarationOnly --pretty && merge-dirs build/dts build && rm -rf build/dts && rm -rf build/**/*.test.*"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "gitHead": "3a53c93ada348d676b43c6e6ec357953a506253b"
+}

@@ -1,0 +1,50 @@
+{
+    "name": "@orbito/style",
+    "version": "0.0.5",
+    "description": "Sass transpilation and CSS optimization helper.",
+    "author": {
+        "name": "bemit",
+        "url": "https://bemit.codes"
+    },
+    "contributors": [
+        {
+            "name": "Michael Becker",
+            "url": "https://i-am-digital.eu"
+        }
+    ],
+    "license": "MIT",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/orbiter-cloud/render-service.git",
+        "directory": "packages/style-lib"
+    },
+    "exports": {
+        "./StyleService": "./build/StyleService/index.js"
+    },
+    "devDependencies": {
+        "autoprefixer": "^10.3.4",
+        "cssnano": "^5.0.8",
+        "node-sass": "^7.0.1",
+        "node-sass-tilde-importer": "^1.0.2",
+        "postcss": "^8.3.6",
+        "postcss-import": "^14.0.2",
+        "postcss-loader": "^7.0.1"
+    },
+    "peerDependencies": {
+        "autoprefixer": "^10.3.4",
+        "cssnano": "^5.0.8",
+        "node-sass": "^7.0.1",
+        "node-sass-tilde-importer": "^1.0.2",
+        "postcss": "^8.3.6",
+        "postcss-import": "^14.0.2",
+        "postcss-loader": "^7.0.1"
+    },
+    "scripts": {
+        "dtsgen": "tsc -d --emitDeclarationOnly --pretty && merge-dirs build/dts/ build/StyleService && rm -rf build/dts && rm -rf build/**/*.test.*"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "gitHead": "3a53c93ada348d676b43c6e6ec357953a506253b"
+}
