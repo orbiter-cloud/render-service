@@ -25,9 +25,11 @@ const handler = {
                 GIT_COMMIT: process.env.GIT_COMMIT,
             }
             fs.writeFileSync(path.join(rootDir, 'packages/render-api/build/build_info.json'), JSON.stringify(buildInfo))
+            fs.writeFileSync(path.join(rootDir, 'packages/demo-static/build/build_info.json'), JSON.stringify(buildInfo))
         }
         console.log('Created Build Info File.')
     },
 }
 
+const actionTargets = {}
 runCLI(actionTargets, handler)
