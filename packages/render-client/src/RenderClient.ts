@@ -77,12 +77,16 @@ export class RenderClient {
         }
     }
 
-    public apiClient(): SuperAgent<SuperAgentRequest> {
-        return superagent
+    public apiClient(trace?: string): SuperAgent<SuperAgentRequest> {
+        const agent = superagent
             .agent()
             .set('Accept', 'application/json')
             .set('Content-Type', 'application/json')
             .set('User-Agent', 'Orbito RenderClient; NodeJS')
+        if(trace) {
+            agent.set('X-Trace-Id', trace as string)
+        }
+        return agent
     }
 
     public async render(
@@ -117,9 +121,8 @@ export class RenderClient {
             validate: number
         }
     }> {
-        return await this.apiClient()
+        return await this.apiClient(trace)
             .post(this.backends[renderer] + '/template/' + template.id + '/render/' + template.fragment)
-            .set('X-Trace-Id', trace as string)
             .send({
                 style: style,
                 styleVars: styleVars,
@@ -163,9 +166,8 @@ export class RenderClient {
             validate: number
         }
     }> {
-        return await this.apiClient()
+        return await this.apiClient(trace)
             .post(this.backends[renderer] + '/template/' + template + '/style/' + style)
-            .set('X-Trace-Id', trace as string)
             .send({
                 styleVars: styleVars,
                 optimize: optimize,

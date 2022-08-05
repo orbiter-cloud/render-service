@@ -26,7 +26,7 @@
         "ajv": "^8.11.0",
         "on-headers": "^1.0.2",
         "node-watch": "~0.7.3",
-        "@orbito/render-client": "~0.0.1",
+        "@orbito/render-client": "~0.0.2",
         "@orbstation/command": "~0.1.2",
         "@orbstation/route": "~0.0.5",
         "@bemit/glog": "~0.0.8",
