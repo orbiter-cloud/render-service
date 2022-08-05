@@ -1,19 +1,33 @@
 # Orbito Render
 
-Libs and microservice to render data + template as HTML.
+Microservice & framework to render data + template as optimized HTML.
 
 [![Github actions Build](https://github.com/orbiter-cloud/render-service/actions/workflows/blank.yml/badge.svg)](https://github.com/orbiter-cloud/render-service/actions)
 [![MIT license](https://img.shields.io/npm/l/@orbito/render?style=flat-square)](https://github.com/orbiter-cloud/render-service/blob/main/LICENSE)
 [![Coverage Status](https://img.shields.io/codecov/c/github/orbiter-cloud/render-service/main.svg?style=flat-square)](https://codecov.io/gh/orbiter-cloud/render-service/branch/main)
 ![Typed](https://flat.badgen.net/badge/icon/Typed?icon=typescript&label&labelColor=blue&color=555555)
 
-- @orbito/render [![npm (scoped)](https://img.shields.io/npm/v/@orbito/render?style=flat-square)](https://www.npmjs.com/package/@orbito/render)
-- @orbito/render-client [![npm (scoped)](https://img.shields.io/npm/v/@orbito/render-client?style=flat-square)](https://www.npmjs.com/package/@orbito/render-client)
-- @orbito/style [![npm (scoped)](https://img.shields.io/npm/v/@orbito/style?style=flat-square)](https://www.npmjs.com/package/@orbito/style)
+[boilerplate & example repository](https://github.com/orbiter-cloud/render-suite)
 
-## Docker Images
+- [Docker Image](#docker-image)
+- [Configuration](#config)
+- [Template Setup](#template-setup)
+- [HTTP Clients](#clients)
+
+## Docker Image
 
 [bemiteu/render](https://hub.docker.com/r/bemiteu/render)
+
+### Image with baked-in files
+
+Build an image where the `locales` and `templates` are baked in, thus can be pushed to a image repository and used/deployed directly.
+
+```dockerfile
+FROM bemiteu/render
+
+COPY --chown=node:node ./locales /home/node/app/locales
+COPY --chown=node:node ./templates /home/node/app/templates
+```
 
 ### Docker Compose Setup
 
@@ -48,16 +62,6 @@ services:
         image: redis:alpine
 ```
 
-### Image with baked-in files
-
-Build an image where the `locales` and `templates` are baked in, thus can be pushed to a image repository and used/deployed directly.
-
-```dockerfile
-FROM bemiteu/render
-
-COPY --chown=node:node ./locales /home/node/app/locales
-COPY --chown=node:node ./templates /home/node/app/templates
-```
 
 ## Config
 
@@ -125,6 +129,13 @@ docker run --rm -it \
 ## Clients
 
 ### NodeJS Client
+
+[![npm (scoped)](https://img.shields.io/npm/v/@orbito/render-client?style=flat-square)](https://www.npmjs.com/package/@orbito/render-client)
+
+```shell
+npm i --save @orbito/render-client superagent
+npm i --save-dev @types/superagent
+```
 
 ```ts
 import { RenderClient } from '@orbito/render-client/RenderClient'
