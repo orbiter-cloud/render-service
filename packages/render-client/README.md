@@ -9,6 +9,41 @@ HTTP client to use with [Orbito Render](https://github.com/orbiter-cloud/render-
 
 ```shell
 npm i --save @orbito/render-client superagent
+npm i --save-dev @types/superagent
+```
+
+```ts
+import { RenderClient } from '@orbito/render-client/RenderClient'
+
+const renderClient = new RenderClient(
+    {
+        default: 'http://localhost:4264',
+    }, {
+        html: RenderClient.optimizeForHtml,
+        email: RenderClient.optimizeForEmail,
+    },
+)
+
+const styleId = 'main'
+
+const res = await renderClient.render(
+    'default', 'en', styleId,
+    renderClient.tplRef('my-tpl', 'pages/default'),// the template reference
+    renderClient.optimize('html'),// the optimization settings
+    {},// data, available in template under `doc.*`
+    {},// styleVars, configure Scss vars just in time
+)
+console.log('   > rendered template in ' + res.renderTime + 'ms')
+const html = res.rendered
+
+const resStyle = await renderClient.style(
+    'default', styleId, 'my-tpl',
+    {nanoCss: true, cssAutoPrefix: true},
+    {},// styleVars, configure Scss vars just in time
+)
+console.log('   > generated style in ' + resStyle.styleTime + 'ms')
+
+const style = resStyle.style
 ```
 
 > ESM only package

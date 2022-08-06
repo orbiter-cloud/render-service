@@ -1,6 +1,6 @@
 {
     "name": "@orbito/render-client",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "HTTP Client to use with Orbito Render service",
     "author": {
         "name": "bemit",
@@ -37,6 +37,5 @@
     },
     "publishConfig": {
         "access": "public"
-    },
-    "gitHead": "3a53c93ada348d676b43c6e6ec357953a506253b"
+    }
 }

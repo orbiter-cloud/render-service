@@ -1,6 +1,6 @@
 # Orbito Render
 
-Microservice & framework to render data + template as optimized HTML.
+Headless render engine: data+tpl to optimized HTML & CSS, for pages, ads and emails.
 
 [![Github actions Build](https://github.com/orbiter-cloud/render-service/actions/workflows/blank.yml/badge.svg)](https://github.com/orbiter-cloud/render-service/actions)
 [![MIT license](https://img.shields.io/npm/l/@orbito/render?style=flat-square)](https://github.com/orbiter-cloud/render-service/blob/main/LICENSE)
@@ -61,7 +61,6 @@ services:
     redis:
         image: redis:alpine
 ```
-
 
 ## Config
 
@@ -128,48 +127,8 @@ docker run --rm -it \
 
 ## Clients
 
-### NodeJS Client
-
-[![npm (scoped)](https://img.shields.io/npm/v/@orbito/render-client?style=flat-square)](https://www.npmjs.com/package/@orbito/render-client)
-
-```shell
-npm i --save @orbito/render-client superagent
-npm i --save-dev @types/superagent
-```
-
-```ts
-import { RenderClient } from '@orbito/render-client/RenderClient'
-
-const renderClient = new RenderClient(
-    {
-        default: 'http://localhost:4264',
-    }, {
-        html: RenderClient.optimizeForHtml,
-        email: RenderClient.optimizeForEmail,
-    }
-)
-
-const styleId = 'main'
-
-const res = await renderClient.render(
-    'default', 'en', styleId,
-    renderClient.tplRef('my-tpl', 'pages/default'),// the template reference
-    renderClient.optimize('html'),// the optimization settings
-    {},// data, available in template under `doc.*`
-    {},// styleVars, configure Scss vars just in time
-)
-console.log('   > rendered template in ' + res.renderTime + 'ms')
-const html = res.rendered
-
-const resStyle = await renderClient.style(
-    'default', styleId, 'my-tpl',
-    {nanoCss: true, cssAutoPrefix: true},
-    {},// styleVars, configure Scss vars just in time
-)
-console.log('   > generated style in ' + resStyle.styleTime + 'ms')
-
-const style = resStyle.style
-```
+- [PHP Client](https://github.com/orbiter-cloud/render-client-php) [![Latest Stable Version](https://poser.pugx.org/orbito/render-client/version?style=flat-square)](https://packagist.org/packages/orbito/render-client)
+- [NodeJS Client](./packages/render-client) [![npm (scoped)](https://img.shields.io/npm/v/@orbito/render-client?style=flat-square)](https://www.npmjs.com/package/@orbito/render-client)
 
 ## Versions
 
