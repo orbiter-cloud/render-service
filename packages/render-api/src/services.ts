@@ -36,6 +36,7 @@ export interface ServiceConfig {
 export const services = (serviceConfig: ServiceConfig): ServiceConfig => {
     const {
         isProd, buildInfo, packageJson,
+        serviceId, logId, logProject,
     } = serviceConfig
     ServiceService.configure('buildInfo', buildInfo)
     ServiceService.configure('accessConfig', {
@@ -67,12 +68,28 @@ export const services = (serviceConfig: ServiceConfig): ServiceConfig => {
         }
     }
 
-    ServiceService.define(IdManager, [{
+    ServiceService.define(RedisManager, [[
+        RedisManager.create({
+            url: 'redis://' + process.env.REDIS_HOST,
+            database: 6,
+        }),
+        RedisManager.create({
+            url: 'redis://' + process.env.REDIS_HOST,
+            database: 7,
+        }),
+    ]])
+    ServiceService.define(
+        RedisCached,
+        (): ConstructorParameters<typeof RedisCached> =>
+            [ServiceService.use(RedisManager).database(7)],
+    )
+
+    ServiceService.define(IdManager, (): ConstructorParameters<typeof IdManager> => [{
         host: process.env.ID_HOST as string | undefined,
         validation: idValidation,
         cacheExpire: 60 * (isProd ? 60 * 6 : 15),
         cacheExpireMemory: 60 * 5,
-        redisManager: () => ServiceService.use(RedisManager),
+        redis: ServiceService.use(RedisManager).database(6),
     }])
 
     ServiceService.define(TemplateRegistry, [path.join(__dirname, '../', 'templates')])
@@ -83,23 +100,25 @@ export const services = (serviceConfig: ServiceConfig): ServiceConfig => {
     ServiceService.define(TemplateOptimizeService, [])
     ServiceService.define(LocaleService, [path.join(__dirname, '../', 'locales')])
     ServiceService.define(SchemaService, [])
+
     if(process.env.GCP_LOG) {
         ServiceService.configure('googleLog', true)
-        ServiceService.define(LogManager, [{
-            keyFilename: envFileToAbsolute(process.env.GCP_LOG) as string,
-        }])
+        ServiceService.define(LogManager, [
+            {
+                keyFilename: envFileToAbsolute(process.env.GCP_LOG) as string,
+            },
+            {
+                service: serviceId,
+                logId: logId,
+                logProject: logProject,
+                app_env: process.env.APP_ENV,
+                version: buildInfo?.version,
+            },
+        ])
     }
-    ServiceService.define(RedisManager, [{
-        url: 'redis://' + process.env.REDIS_HOST,
-        database: 6,
-    }])
-    ServiceService.define(RedisCached, () => [new RedisManager({
-        url: 'redis://' + process.env.REDIS_HOST,
-        database: 7,
-    })] as [RedisManager])
     ServiceService.define(StyleService, [{
         cacheExpire: process.env.CACHE_EX_STYLE ? Number(process.env.CACHE_EX_STYLE) : 500,
-        cache: (...params) => ServiceService.use(RedisCached).cache(...params)
+        cache: (...params) => ServiceService.use(RedisCached).cache(...params),
     }])
     ServiceService.define(CommandDispatcher, [{
         resolvers: [

@@ -8,8 +8,7 @@
 HTTP client to use with [Orbito Render](https://github.com/orbiter-cloud/render-service).
 
 ```shell
-npm i --save @orbito/render-client superagent
-npm i --save-dev @types/superagent
+npm i --save @orbito/render-client
 ```
 
 ```ts
