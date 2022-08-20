@@ -119,7 +119,7 @@ app.use(function profilerMiddleware(req: express.Request & RequestCustomPayload,
         }, {
             error: res.locals.error,
             error_stack: res.locals.error_stack,
-        })).then(() => null).catch(() => null)
+        })).then(() => null).catch((e) => console.error('log error', e))
     })
 
     next()

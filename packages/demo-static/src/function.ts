@@ -82,7 +82,6 @@ app.use(function profilerMiddleware(req: express.Request & RequestCustomPayload,
             git_commit: buildInfo.GIT_COMMIT as string,
             node_type: 'api',
         }
-
         logger.write(logger.entry({
             severity:
                 !res.statusCode ? 'ERROR' :

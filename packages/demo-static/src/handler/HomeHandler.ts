@@ -24,6 +24,7 @@ const HomeHandler: RouteHandler = async(_req, res) => {
 
     ${envIsTrue(process.env.HOME_NO_DOCS) ? '' : `
     <ul style="width: 280px; text-align: left; margin: 0 auto;">
+        <li><a href="/example">Local Example Page</a></li>
         <li><a href="https://github.com/orbiter-cloud/render-service">GitHub project</a></li>
         <li class="list-style-none mt1 ot o-divider right-align"><a href="https:///bemit.codes" class="color-secondary">bemit.codes</a></li>
     </ul>`}

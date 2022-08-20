@@ -1,4 +1,5 @@
 import { LogManager } from '@bemit/glog/LogManager'
+import { LoggerGlobal } from '@bemit/glog/LoggerGlobal'
 import fs from 'fs'
 import { ServiceConfig, services, ServiceService } from './services.js'
 import { dirname } from 'path'
@@ -68,15 +69,21 @@ export default (): ServiceConfig => {
     })
     if(process.env.NODE_ENV !== 'development' && ServiceService.config('googleLog')) {
         const logManager = ServiceService.use(LogManager)
-        logManager.bindToGlobal(serviceConfig.serviceId, serviceConfig.logId + '--' + process.env.APP_ENV, buildInfo?.version, {
-            app_env: process.env.APP_ENV as string,
-            docker_service_name: process.env.DOCKER_SERVICE_NAME as string,
-            docker_node_host: process.env.DOCKER_NODE_HOST as string,
-            docker_task_name: process.env.DOCKER_TASK_NAME as string,
-            git_ci_run: buildInfo?.GIT_CI_RUN as string,
-            git_commit: buildInfo?.GIT_COMMIT as string,
-            node_type: 'global.console',
-        })
+        LoggerGlobal(
+            logManager.getLogger(serviceConfig.logId + '--' + process.env.APP_ENV),
+            {
+                app_env: logManager.serviceInfo.app_env as string,
+                docker_service_name: process.env.DOCKER_SERVICE_NAME as string,
+                docker_node_host: process.env.DOCKER_NODE_HOST as string,
+                docker_task_name: process.env.DOCKER_TASK_NAME as string,
+                git_ci_run: buildInfo?.GIT_CI_RUN as string,
+                git_commit: buildInfo?.GIT_COMMIT as string,
+                node_type: 'global.console',
+            }, undefined, {
+                service: logManager.serviceInfo.service as string,
+                version: logManager.serviceInfo.version as string,
+            },
+        )
     }
     return serviceConfig
 }
