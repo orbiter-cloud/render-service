@@ -5,7 +5,12 @@ export class SchemaService {
     protected readonly validators: { v: any, s: any }[] = []
 
     constructor() {
-        this.validator = new Ajv()
+        this.validator = new Ajv({
+            strictSchema: false,
+            validateFormats: false,
+            // even by small schemas, `validateSchema: true` costs 20ms-50ms locally
+            validateSchema: false,
+        })
     }
 
     public validate(schema: any, data: any) {

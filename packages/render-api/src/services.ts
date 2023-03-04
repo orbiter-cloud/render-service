@@ -19,31 +19,68 @@ import { CommandDispatcher } from '@orbstation/command/CommandDispatcher'
 import { CommandResolverFolder } from '@orbstation/command/CommandResolverFolder'
 import { twigFilters } from './Twig/TwigFilters.js'
 import { twigFunctions } from './Twig/TwigFunctions.js'
+import { OrbService, OrbServiceFeature, OrbServiceFeatures } from '@orbstation/service'
+import { OpenApiApp } from '@orbstation/oas/OpenApiApp'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export const ServiceService = new ServiceContainer<AppConfig>()
 
 export interface ServiceConfig {
-    buildInfo: { [k: string]: string }
-    packageJson: { [k: string]: string }
     isProd?: boolean
-    serviceId: string
-    logId: string
-    logProject: string
+    buildInfo: AppConfig['buildInfo']
+    packageJson: { name?: string, version?: string, [k: string]: unknown }
+    service: OrbService<OrbServiceFeatures<{ 'gcp:log': OrbServiceFeature }>>
 }
 
-export const services = (serviceConfig: ServiceConfig): ServiceConfig => {
-    const {
-        isProd, buildInfo, packageJson,
-        serviceId, logId, logProject,
-    } = serviceConfig
+export const services = (serviceConfig: ServiceConfig) => {
+    const {buildInfo, service, isProd} = serviceConfig
+
+    ServiceService.configure('host', process.env.HOST || ('http://localhost:' + (process.env.PORT || 3000)))
+    // todo: add support for env-vars and refactor routes setup to use it
+    ServiceService.configure('basePath', '')
     ServiceService.configure('buildInfo', buildInfo)
     ServiceService.configure('accessConfig', {
         publicRenderApi: envIsTrue(process.env.ACCESS_PUBLIC_RENDER),
         publicDescribeApi: envIsTrue(process.env.ACCESS_PUBLIC_DESCRIBE),
     })
-    ServiceService.configure('packageVersion', packageJson?.version)
+
+    ServiceService.define(OpenApiApp, (): ConstructorParameters<typeof OpenApiApp> => [
+        {
+            title: 'Render-Service',
+            description: 'API docs of a [Orbito Render](https://github.com/orbiter-cloud/render-service) service.',
+            version: service.version || service.buildNo,
+            license: {name: 'MIT'},
+        },
+        [],
+        {
+            servers: [
+                {
+                    url: ServiceService.config('host'),
+                    description: 'local dev server',
+                    variables: {},
+                },
+            ],
+        },
+    ])
+
+    ServiceService.define(RedisManager, (): ConstructorParameters<typeof RedisManager> => [[
+        RedisManager.define('store', {
+            url: 'redis://' + process.env.REDIS_HOST,
+            database: typeof process.env.REDIS_DB_STORE !== 'undefined' ? Number(process.env.REDIS_DB_STORE) : 0,
+        })
+            .on('error', (err) => console.log('Redis Client Error', err)),
+        RedisManager.define('id-cache', {
+            url: 'redis://' + process.env.REDIS_HOST,
+            database: typeof process.env.REDIS_DB_CACHE !== 'undefined' ? Number(process.env.REDIS_DB_CACHE) : 0,
+        })
+            .on('error', (err) => console.log('Redis Client Error', err)),
+    ]])
+    ServiceService.define(
+        RedisCached,
+        (): ConstructorParameters<typeof RedisCached> =>
+            [ServiceService.use(RedisManager).connection('store')],
+    )
 
     const envIdKeyUrl = process.env.ID_KEY_URL
     const envIdKeyMem = process.env.ID_KEY_MEM
@@ -68,28 +105,12 @@ export const services = (serviceConfig: ServiceConfig): ServiceConfig => {
         }
     }
 
-    ServiceService.define(RedisManager, [[
-        RedisManager.create({
-            url: 'redis://' + process.env.REDIS_HOST,
-            database: 6,
-        }),
-        RedisManager.create({
-            url: 'redis://' + process.env.REDIS_HOST,
-            database: 7,
-        }),
-    ]])
-    ServiceService.define(
-        RedisCached,
-        (): ConstructorParameters<typeof RedisCached> =>
-            [ServiceService.use(RedisManager).database(7)],
-    )
-
     ServiceService.define(IdManager, (): ConstructorParameters<typeof IdManager> => [{
         host: process.env.ID_HOST as string | undefined,
         validation: idValidation,
         cacheExpire: 60 * (isProd ? 60 * 6 : 15),
         cacheExpireMemory: 60 * 5,
-        redis: ServiceService.use(RedisManager).database(6),
+        redis: ServiceService.use(RedisManager).connection('id-cache'),
     }])
 
     ServiceService.define(TemplateRegistry, [path.join(__dirname, '../', 'templates')])
@@ -101,18 +122,25 @@ export const services = (serviceConfig: ServiceConfig): ServiceConfig => {
     ServiceService.define(LocaleService, [path.join(__dirname, '../', 'locales')])
     ServiceService.define(SchemaService, [])
 
-    if(process.env.GCP_LOG) {
-        ServiceService.configure('googleLog', true)
+    if(service.features.enabled('gcp:log')) {
         ServiceService.define(LogManager, [
             {
                 keyFilename: envFileToAbsolute(process.env.GCP_LOG) as string,
             },
             {
-                service: serviceId,
-                logId: logId,
-                logProject: logProject,
-                app_env: process.env.APP_ENV,
-                version: buildInfo?.version,
+                service: service.name,
+                version: service.version,
+                logId: process.env.LOG_ID + '--' + service.environment,
+                logProject: process.env.LOG_PROJECT as string,
+            },
+            {
+                app_env: service.environment,
+                ...service.buildNo ? {
+                    build_no: service.buildNo,
+                } : {},
+                docker_service_name: process.env.DOCKER_SERVICE_NAME as string,
+                docker_node_host: process.env.DOCKER_NODE_HOST as string,
+                docker_task_name: process.env.DOCKER_TASK_NAME as string,
             },
         ])
     }
@@ -120,11 +148,11 @@ export const services = (serviceConfig: ServiceConfig): ServiceConfig => {
         cacheExpire: process.env.CACHE_EX_STYLE ? Number(process.env.CACHE_EX_STYLE) : 500,
         cache: (...params) => ServiceService.use(RedisCached).cache(...params),
     }])
-    ServiceService.define(CommandDispatcher, [{
-        resolvers: [
+    ServiceService.define(CommandDispatcher as typeof CommandDispatcher<undefined>, [{
+        resolver: [
             new CommandResolverFolder({folder: path.join(__dirname, 'commands')}),
         ],
     }])
 
-    return serviceConfig as ServiceConfig
+    return ServiceService
 }

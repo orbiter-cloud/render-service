@@ -2,15 +2,15 @@ import { CommandHandler } from '@orbstation/command/CommandHandler'
 import path, { dirname } from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { OpenApiGen } from '../lib/OpenApiGen.js'
-import { routes } from '../routes.js'
+import { ServiceService } from '../../../services.js'
+import { OpenApiApp } from '@orbstation/oas/OpenApiApp'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export const openapiCommand: CommandHandler['run'] = async() => {
-    const swagGen = new OpenApiGen()
+    const oas = ServiceService.use(OpenApiApp)
     const openApiFile = path.resolve(__dirname, '../openapi.json')
-    fs.writeFileSync(openApiFile, JSON.stringify(swagGen.generate(routes), undefined, 4))
+    fs.writeFileSync(openApiFile, JSON.stringify(oas.generate(), undefined, 4))
     console.log('Generated OpenAPI file: ' + openApiFile)
 }
 

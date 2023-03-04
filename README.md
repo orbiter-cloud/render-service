@@ -72,21 +72,33 @@ The following variables allows restricting the API for authenticated users, usin
 
 Enabled by setting either `ID_KEY_URL` or `ID_KEY_MEM`.
 
-- `ID_ISSUER`, `[string]`, for issuer validation
-- `ID_KEY_MEM`, `[string]`, the JWT secret key to use
-- `ID_KEY_URL`, `[string]`, the url from where to load the JWT public key, e.g. `/verify-key`
-- `ID_KEY_ALGO`, `[string]`, defaults to `HS256`
-- `ID_AUDIENCE`, `[string]`, enforces audience validation
-- `ID_HOST`, `[string]`, host of your ID service, required for `ID_KEY_URL`
+- `ID_ISSUER`: `[string]`, for issuer validation
+- `ID_KEY_MEM`: `[string]`, the JWT secret key to use
+- `ID_KEY_URL`: `[string]`, the url from where to load the JWT public key, e.g. `/verify-key`
+- `ID_KEY_ALGO`: `[string]`, defaults to `HS256`
+- `ID_AUDIENCE`: `[string]`, enforces audience validation
+- `ID_HOST`: `[string]`, host of your ID service, required for `ID_KEY_URL`
 
 ### ENV Vars: Log
 
 The following variables enables logging with Google Cloud Log.
 
-- `GCP_LOG`, `[string]`, path to the authentication file, if set enables google cloud logging
-- `LOG_PROJECT`, `[string]`, id of the google cloud project
-- `LOG_ID`, `[string]`, id of the logging bucket
-- `LOG_SERVICE_NAME`, `[string]`, used in `resource.labels.service`
+- `GCP_LOG`: `[string]`, path to the authentication file, if set enables google cloud logging
+- `LOG_PROJECT`: `[string]`, id of the google cloud project
+- `LOG_ID`: `[string]`, id of the logging bucket
+- `LOG_SERVICE_NAME`: `[string]`, used in `resource.labels.service`
+- labels
+    - `APP_ENV` as `
+
+### ENV Vars: Access, Caching & Misc.
+
+- `CACHE_EX_STYLE`: `[number]`, how long built styles should be cached, in seconds
+- `ACCESS_PUBLIC_RENDER`: `['true' | '1' | 'yes' | 'on']`, if the render endpoint can be accessed without authentication
+- `ACCESS_PUBLIC_DESCRIBE`: `['true' | '1' | 'yes' | 'on']`, if the `document-types` APIs can be accessed without authentication
+- `HOME_NO_DOCS`: `['true' | '1' | 'yes' | 'on']`, if truly will show links to docs on home
+- `HOME_FOOTER`: `[string]`, if set used as footer on home, must only contain HTML which is allowed in `p`
+- `OA_SERVER_SELECT`: `['true' | '1' | 'yes' | 'on']`, when truly will allow user to select server
+- `OA_SERVER_URL`: `['auto' | string]`, used as the OpenAPI Server URL, when `auto` using the current host
 
 ## Template Setup
 

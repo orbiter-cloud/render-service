@@ -3,9 +3,6 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { ServiceContainer } from 'service-service'
 import { LogManager } from '@bemit/glog/LogManager'
-import { IdManager, IdValidationStrategy } from '@bemit/cloud-id/IdManager'
-import { RedisManager } from '@bemit/redis/RedisManager'
-import { RedisCached } from '@bemit/redis/RedisCached'
 import { envFileToAbsolute } from './lib/envFileToAbsolute.js'
 import { SchemaService } from './service/SchemaService.js'
 import { AppConfig } from './config/AppConfig.js'
@@ -28,58 +25,11 @@ export interface ServiceConfig {
 
 export const services = (serviceConfig: ServiceConfig): ServiceConfig => {
     const {
-        isProd, buildInfo, packageJson,
+        buildInfo, packageJson,
         serviceId, logId, logProject,
     } = serviceConfig
     ServiceService.configure('buildInfo', buildInfo)
     ServiceService.configure('packageVersion', packageJson?.version)
-
-    const envIdKeyUrl = process.env.ID_KEY_URL
-    const envIdKeyMem = process.env.ID_KEY_MEM
-    let idValidation: undefined | IdValidationStrategy
-    if(envIdKeyMem && envIdKeyUrl) {
-        throw new Error('setup failed, `ID_KEY_URL` and `ID_KEY_MEM` can not be used concurrently')
-    } else if(envIdKeyMem) {
-        idValidation = {
-            type: 'memory-key',
-            keyMem: envIdKeyMem,
-            issuer: process.env.ID_ISSUER as string,
-            audience: process.env.ID_AUDIENCE as string | undefined,
-            algorithms: process.env.ID_KEY_ALGO ? process.env.ID_KEY_ALGO.split(',') : undefined,
-        }
-    } else if(envIdKeyUrl) {
-        idValidation = {
-            type: 'load-key',
-            keyUrl: envIdKeyUrl,
-            issuer: process.env.ID_ISSUER as string,
-            audience: process.env.ID_AUDIENCE as string | undefined,
-            algorithms: process.env.ID_KEY_ALGO ? process.env.ID_KEY_ALGO.split(',') : undefined,
-        }
-    }
-
-    ServiceService.define(RedisManager, [[
-        RedisManager.create({
-            url: 'redis://' + process.env.REDIS_HOST,
-            database: 6,
-        }),
-        RedisManager.create({
-            url: 'redis://' + process.env.REDIS_HOST,
-            database: 7,
-        }),
-    ]])
-    ServiceService.define(
-        RedisCached,
-        (): ConstructorParameters<typeof RedisCached> =>
-            [ServiceService.use(RedisManager).database(7)],
-    )
-
-    ServiceService.define(IdManager, [{
-        host: process.env.ID_HOST as string | undefined,
-        validation: idValidation,
-        cacheExpire: 60 * (isProd ? 60 * 6 : 15),
-        cacheExpireMemory: 60 * 5,
-        redis: ServiceService.use(RedisManager).database(7),
-    }])
 
     ServiceService.define(SchemaService, [])
     if(process.env.GCP_LOG) {
