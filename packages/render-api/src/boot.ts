@@ -1,89 +1,86 @@
 import { LogManager } from '@bemit/glog/LogManager'
-import { LoggerGlobal } from '@bemit/glog/LoggerGlobal'
-import fs from 'fs'
-import { ServiceConfig, services, ServiceService } from './services.js'
+import { services } from './services.js'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
-import dotenv from 'dotenv'
 import process from 'process'
+import { LoggerGlobal } from '@bemit/glog/LoggerGlobal'
+import preloadEnv from './config/preload/preloadEnv.js'
+import preloadPackage from './config/preload/preloadPackage.js'
+import preloadBuildInfo from './config/preload/preloadBuildInfo.js'
+import { serviceFeatures } from './config/serviceFeatures.js'
+import { OrbExtensions, OrbService, OrbServiceExtension } from '@orbstation/service'
+import { basePath } from './routes.js'
+import { RedisManager } from '@bemit/redis'
+import { envIsTrue } from '@orbstation/service/envIs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-let dotenvRes = dotenv.config({
-    path: __dirname + '/.env',
-})
-
-if(dotenvRes.error) {
-    if(dotenvRes.error.message.indexOf('ENOENT:') === 0) {
-        dotenvRes = dotenv.config({
-            path: dirname(__dirname) + '/.env',
-        })
-    }
-    if(dotenvRes.error) {
-        console.error('dotenvRes.error', dotenvRes.error)
-        process.exit(1)
-    }
+if(!envIsTrue(process.env.NO_DOTENV)) {
+    preloadEnv(__dirname)
 }
+const packageJson = preloadPackage(__dirname)
+const buildInfo = preloadBuildInfo(__dirname, packageJson)
 
-export default (): ServiceConfig => {
-    let packageJson: { [k: string]: string } = {}
-    try {
-        packageJson = JSON.parse(fs.readFileSync(__dirname + '/package.json', 'utf8'))
-    } catch(e) {
-        try {
-            packageJson = JSON.parse(fs.readFileSync(__dirname + '/../package.json', 'utf8'))
-        } catch(e) {
-            // noop
-        }
-    }
+export default async(nodeType?: 'api' | 'cli') => {
+    serviceFeatures.parseFeatureConfig(process.env as { [k: string]: string })
 
-    let buildInfo: { [k: string]: string } = {}
-    try {
-        buildInfo = JSON.parse(fs.readFileSync(__dirname + '/build_info.json', 'utf8') || '{}')
-        buildInfo = {
-            ...buildInfo,
-            GIT_CI_RUN: process.env.GIT_CI_RUN || buildInfo.GIT_CI_RUN,
-            GIT_COMMIT: process.env.GIT_COMMIT || buildInfo.GIT_COMMIT,
-            ...(packageJson?.version ? {
-                version: packageJson?.name + '@v' + packageJson?.version,
-            } : {}),
-        }
-    } catch(e) {
-        // noop
-        buildInfo = {
-            GIT_CI_RUN: process.env.GIT_CI_RUN as string,
-            GIT_COMMIT: process.env.GIT_COMMIT as string,
-            ...(packageJson?.version ? {
-                version: packageJson?.name + '@v' + packageJson?.version,
-            } : {}),
-        }
-    }
+    serviceFeatures.debugFeatures()
 
-    const serviceConfig = services({
-        buildInfo,
-        packageJson,
+    // todo: unify `serviceConfig`, buildInfo, "service-meta inside of `logManager.serviceInfo`" inside of `OrbService`
+    const service = new OrbService(
+        {
+            name: process.env.LOG_SERVICE_NAME as string,
+            environment: process.env.APP_ENV as string,
+            version: packageJson?.version || buildInfo?.GIT_COMMIT?.split('/')?.[2]?.slice(0, 6) || 'v0.0.1',
+            buildNo: (buildInfo?.GIT_COMMIT ? buildInfo?.GIT_COMMIT + '.' : '') + (buildInfo?.GIT_CI_RUN || process.env.K_REVISION),
+        },
+        serviceFeatures,
+    )
+
+    const extensions = new OrbExtensions<OrbServiceExtension<{ service: typeof service, ServiceService: typeof ServiceService }>>([
+        () => import('./features/oas/oas.feature.js').then(m => m.default({
+            basePath: basePath,
+            logo: undefined,
+            serverSelect: envIsTrue(process.env.OA_SERVER_SELECT),
+            serverUrl: process.env.OA_SERVER_URL,
+        })),
+    ])
+
+    const ServiceService = services({
+        service: service,
         isProd: process.env.NODE_ENV !== 'development',
-        serviceId: process.env.LOG_SERVICE_NAME as string,
-        logProject: process.env.LOG_PROJECT as string,
-        logId: process.env.LOG_ID as string,
+        packageJson: packageJson,
+        buildInfo: buildInfo,
     })
-    if(process.env.NODE_ENV !== 'development' && ServiceService.config('googleLog')) {
+
+    const onHalt: (() => Promise<void>)[] = []
+
+    if(service.features.enabled('gcp:log')) {
         const logManager = ServiceService.use(LogManager)
-        LoggerGlobal(
-            logManager.getLogger(serviceConfig.logId + '--' + process.env.APP_ENV),
-            {
-                app_env: logManager.serviceInfo.app_env as string,
-                docker_service_name: process.env.DOCKER_SERVICE_NAME as string,
-                docker_node_host: process.env.DOCKER_NODE_HOST as string,
-                docker_task_name: process.env.DOCKER_TASK_NAME as string,
-                git_ci_run: buildInfo?.GIT_CI_RUN as string,
-                git_commit: buildInfo?.GIT_COMMIT as string,
-                node_type: 'global.console',
-            }, undefined, {
-                service: logManager.serviceInfo.service as string,
-                version: logManager.serviceInfo.version as string,
-            },
-        )
+        const logger = logManager.getLogger(logManager.serviceInfo.logId)
+        logManager.setLogger('default', logger)
+        if(nodeType !== 'cli' && service.features.enabled('log:global')) {
+            // todo: the logger should be closed as the last - not the first
+            onHalt.push(
+                LoggerGlobal(
+                    logManager.getLogger('default'),
+                    {
+                        ...logManager.globalLabels,
+                        node_type: nodeType + '.console',
+                    }, undefined, {
+                        service: logManager.serviceInfo.service as string,
+                        version: logManager.serviceInfo.version as string,
+                    },
+                ),
+            )
+        }
     }
-    return serviceConfig
+
+    // todo: add `onHalt` to extensions definition by default - or to `onBoot`?s
+    await extensions.boot({service, ServiceService})
+    onHalt.push(function closeRedis() {
+        return ServiceService.use(RedisManager).quit()
+    })
+
+    return {service, extensions, ServiceService, onHalt}
 }

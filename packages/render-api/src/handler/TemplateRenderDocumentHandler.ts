@@ -12,6 +12,7 @@ import { schemaTemplateOptimizeCss } from './TemplateStyleGeneratorHandler.js'
 
 const boolOrDefault = (val: boolean | undefined, defaultVal: boolean) =>
     typeof val === 'undefined' ? defaultVal : val
+
 export const schemaTemplateOptimize = {
     type: 'object',
     additionalProperties: false,
@@ -131,7 +132,7 @@ const TemplateRenderDocumentHandler: RouteHandler<RequestCustomPayload> = async(
                 rule: e.schemaPath,
                 error: e.message,
                 params: e.params,
-            }))
+            })),
         })
     }
 
@@ -149,7 +150,7 @@ const TemplateRenderDocumentHandler: RouteHandler<RequestCustomPayload> = async(
             {
                 nanoCss: boolOrDefault(optimizeValues?.nanoCss, true),
                 cssAutoPrefix: boolOrDefault(optimizeValues?.cssAutoPrefix, false),
-            }
+            },
         )
 
         perfTags.styling = tagStartStyle()
@@ -193,7 +194,7 @@ const TemplateRenderDocumentHandler: RouteHandler<RequestCustomPayload> = async(
             rendered = optimizeService.cleanStyling(
                 rendered,
                 undefined,
-                Array.isArray(optimizeValues?.cleanCssWhitelist) ? optimizeValues?.cleanCssWhitelist : []
+                Array.isArray(optimizeValues?.cleanCssWhitelist) ? optimizeValues?.cleanCssWhitelist : [],
             )
         }
     } catch(e) {
